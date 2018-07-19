@@ -45,7 +45,7 @@ func init()  {
     "java_home": "",
     "apk_tool": "",
     "key_store": "",
-    "store_password": ""
+    "store_password": "",
     "store_alias": ""
 }
  */
@@ -82,9 +82,10 @@ func checkConfig(config *model.ConfigInfo) error {
 	hasJarsigner := false
 	filepath.Walk(binPath, func(path string, info os.FileInfo, err error) error {
 		base := filepath.Base(path)
-		if "java" == base {
+		name := strings.TrimSuffix(base, filepath.Ext(base))
+		if "java" == name {
 			hasJava = true
-		} else if "jarsigner" == base {
+		} else if "jarsigner" == name {
 			hasJarsigner = true
 		}
 
