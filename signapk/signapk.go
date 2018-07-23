@@ -174,22 +174,46 @@ func printCmdOutput(cmd *exec.Cmd) error {
 		return err
 	}
 
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
 	defer stdout.Close()
+	defer stderr.Close()
 	if err = cmd.Start(); err != nil {
 		return err
 	}
 
 	br := bufio.NewReader(stdout)
+	checkErrPipe := false
+	isErrPipe := false
 	for {
 		buf, _, err := br.ReadLine()
 		if err != nil || err == io.EOF {
+			if !checkErrPipe && !isErrPipe {
+				br = bufio.NewReader(stderr)
+				isErrPipe = true
+				continue
+			}
+
 			break
 		}
 
-		log.Println(string(buf))
+		str := string(buf)
+		if strings.Contains(str, " error:") {
+			// apktool error log
+			checkErrPipe = true
+		}
+
+		log.Println(str)
 	}
 
 	cmd.Wait()
+	if checkErrPipe {
+		return errors.New("execute error occur, please check output above")
+	}
+
 	return nil
 }
 
